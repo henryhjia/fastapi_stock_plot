@@ -64,7 +64,7 @@ The app will:
  
   Custom Date Range Tests
 
-  1. test_plot
+  1. ``test_plot``
 
    * Purpose: To verify that the primary plotting function works correctly when a user submits a ticker and a custom date range via
      the main form.
@@ -76,7 +76,7 @@ The app will:
    * Verification: Asserts that the HTTP status code of the response is 200, confirming that the request was processed successfully
      and a result page was generated.
 
-  2. test_plot_long_range
+  2. ``test_plot_long_range``
 
    * Purpose: To ensure the plotting function can handle a larger dataset representing a longer date range without errors.
    * Action:
@@ -84,7 +84,7 @@ The app will:
        2. A POST request is sent to the /plot endpoint with a mock ticker and a 30-day date range.
    * Verification: Asserts that the HTTP status code is 200, indicating the application successfully processed the larger dataset.
 
-  3. test_plot_no_data
+  3. ``test_plot_no_data``
 
    * Purpose: To verify that the application gracefully handles cases where yfinance returns no data for a given ticker (e.g., an
      invalid ticker) by displaying the error page.
@@ -95,7 +95,7 @@ The app will:
        1. Asserts that the HTTP status code is 200.
        2. Asserts that the response text contains the expected title (<title>Error</title>) and content of the error page.
 
-  4. test_plot_ytd
+  4. ``test_plot_ytd``
 
    * Purpose: To verify that the endpoint for generating a "Year to Date" (YTD) plot works correctly.
    * Action:
@@ -103,7 +103,7 @@ The app will:
        2. A GET request is sent to the /plot/AAPL/YTD endpoint.
    * Verification: Asserts that the HTTP status code is 200.
 
-  5. test_plot_1y
+  5. ``test_plot_1y``
 
    * Purpose: To verify that the endpoint for generating a "1 Year" plot works correctly.
    * Action:
@@ -111,7 +111,7 @@ The app will:
        2. A GET request is sent to the /plot/AAPL/1y endpoint.
    * Verification: Asserts that the HTTP status code is 200.
 
-  6. test_plot_5y
+  6. ``test_plot_5y``
 
    * Purpose: To verify that the endpoint for generating a "5 Year" plot works correctly.
    * Action:
@@ -119,7 +119,7 @@ The app will:
        2. A GET request is sent to the /plot/AAPL/5y endpoint.
    * Verification: Asserts that the HTTP status code is 200.
 
-  7. test_plot_max
+  7. ``test_plot_max``
 
    * Purpose: To verify that the endpoint for generating a "MAX" (maximum available data) plot works correctly.
    * Action:
@@ -130,9 +130,10 @@ The app will:
 
 ## Deploment To GCP 
 ```
-
+  gcloud builds submit --config cloudbuild.yaml .
 ```
 
 
 ## Running the Application on GCP
 
+  Open the app in the broser: [https://fastapi-stock-plot.uc.r.appspot.com/](https://fastapi-stock-plot.uc.r.appspot.com/)

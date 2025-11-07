@@ -41,3 +41,4 @@ urllib3==2.5.0
 uvicorn
 websockets==15.0.1
 yfinance==0.2.66
+httpx
