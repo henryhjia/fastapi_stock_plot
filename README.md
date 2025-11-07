@@ -130,11 +130,9 @@ The app will:
 
 ## Deploment To GCP 
 ```
-  git add .
-  git commit -m 'new features'
-  git push
+
 ```
-  The git push will trigger CI/CD deployment.
+
 
 ## Running the Application on GCP
-  Open the app in the broser: [https://flask-stock-plot.uc.r.appspot.com/](https://flask-stock-plot.uc.r.appspot.com/)
+
