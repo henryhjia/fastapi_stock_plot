@@ -51,7 +51,7 @@ The app will:
   ```
   3. Start the FastAPI application
   ```
-  uvicorn app:app --reload
+  uvicorn app.main:app --reload
   ```
   4. Open the app in your browser
   Visit [http://127.0.0.1:8000](http://127.0.0.1:8000) &rarr; to access the **Stock Price Viewer.**
