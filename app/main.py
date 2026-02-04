@@ -63,6 +63,43 @@ def search_ticker(query: str) -> str | None:
         print(f"Error searching for ticker: {e}")
         return None
 
+def get_company_name(ticker: str) -> str:
+    """
+    Fetches the company name for a given ticker.
+    """
+    url = "https://query2.finance.yahoo.com/v1/finance/search"
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+    }
+    params = {
+        'q': ticker,
+        'quotesCount': 1,
+        'newsCount': 0,
+        'enableFuzzyQuery': 'false',
+        'quotesQueryId': 'tss_match_phrase_query'
+    }
+    
+    try:
+        response = requests.get(url, headers=headers, params=params, timeout=5)
+        response.raise_for_status()
+        data = response.json()
+        
+        if 'quotes' in data and len(data['quotes']) > 0:
+             # Find the exact match or the first one
+             item = data['quotes'][0]
+             if item['symbol'] == ticker:
+                  return item.get('shortname') or item.get('longname') or ticker
+             
+             # Fallback: check if any returned quote matches ticker exactly
+             for item in data['quotes']:
+                 if item['symbol'] == ticker:
+                      return item.get('shortname') or item.get('longname') or ticker
+        
+        return ticker
+    except Exception as e:
+        print(f"Error getting company name: {e}")
+        return ticker
+
 def render_plot_page(request: Request, ticker, start_date=None, end_date=None, period=None, date_range=None):
     # Check cache for full_data
     # First try as is
@@ -314,6 +351,7 @@ def render_plot_page(request: Request, ticker, start_date=None, end_date=None, p
 
     return templates.TemplateResponse(request, "result.html", {
         "ticker": ticker,
+        "company_name": get_company_name(ticker),
         "min_price": f'{min_price:.2f}',
         "max_price": f'{max_price:.2f}',
         "total_return": total_return,
