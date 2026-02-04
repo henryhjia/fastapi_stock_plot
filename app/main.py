@@ -8,6 +8,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 
+import requests
 import yfinance as yf
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -33,13 +34,73 @@ async def index(request: Request):
     default_start_date = (datetime.now() - timedelta(days=20)).strftime('%Y-%m-%d')
     return templates.TemplateResponse(request, "index.html", {"today": today, "default_start_date": default_start_date})
 
+def search_ticker(query: str) -> str | None:
+    """
+    Searches for a ticker symbol given a query string (company name or ticker).
+    Returns the top match ticker symbol or None if no match found.
+    """
+    url = "https://query2.finance.yahoo.com/v1/finance/search"
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+    }
+    params = {
+        'q': query,
+        'quotesCount': 1,
+        'newsCount': 0,
+        'enableFuzzyQuery': 'false',
+        'quotesQueryId': 'tss_match_phrase_query'
+    }
+    
+    try:
+        response = requests.get(url, headers=headers, params=params, timeout=5)
+        response.raise_for_status()
+        data = response.json()
+        
+        if 'quotes' in data and len(data['quotes']) > 0:
+            return data['quotes'][0]['symbol']
+        return None
+    except Exception as e:
+        print(f"Error searching for ticker: {e}")
+        return None
+
 def render_plot_page(request: Request, ticker, start_date=None, end_date=None, period=None, date_range=None):
     # Check cache for full_data
-    if ticker in stock_data_cache:
-        full_data = stock_data_cache[ticker]
+    # First try as is
+    full_data = pd.DataFrame()
+    resolved_ticker = ticker
+    
+    # Heuristic: If it looks like a company name (spaces, long, lowercase), search first
+    is_likely_ticker = ticker.isupper() and len(ticker) <= 5 and " " not in ticker
+    
+    if not is_likely_ticker:
+         found_ticker = search_ticker(ticker)
+         if found_ticker:
+             resolved_ticker = found_ticker
+
+    if resolved_ticker in stock_data_cache:
+        full_data = stock_data_cache[resolved_ticker]
     else:
         # Download the maximum available data for the ticker once
-        full_data = yf.download(ticker, period='max', auto_adjust=True, progress=False)
+        # Use simple error handling to avoid printing excessive errors for invalid tickers
+        try:
+             full_data = yf.download(resolved_ticker, period='max', auto_adjust=True, progress=False)
+        except Exception:
+             full_data = pd.DataFrame() # Treat as empty
+        
+        # If empty and we haven't searched yet, try searching now (as fallback for failed ticker lookup)
+        if full_data.empty and is_likely_ticker:
+            found_ticker = search_ticker(ticker)
+            if found_ticker and found_ticker != resolved_ticker:
+                resolved_ticker = found_ticker
+                # Try downloading again with the found ticker
+                if resolved_ticker in stock_data_cache:
+                    full_data = stock_data_cache[resolved_ticker]
+                else:
+                    try:
+                        full_data = yf.download(resolved_ticker, period='max', auto_adjust=True, progress=False)
+                    except Exception:
+                        full_data = pd.DataFrame()
+
         if full_data.empty:
             return templates.TemplateResponse(request, "error.html", context={})
         
@@ -51,7 +112,10 @@ def render_plot_page(request: Request, ticker, start_date=None, end_date=None, p
             else:
                 new_columns.append(col.lower())
         full_data.columns = new_columns
-        stock_data_cache[ticker] = full_data # Store in cache
+        stock_data_cache[resolved_ticker] = full_data # Store in cache with the correct ticker
+
+    # Use resolved_ticker from here on
+    ticker = resolved_ticker
 
     # Determine plot_data based on requested range by slicing full_data
     if start_date and end_date:
