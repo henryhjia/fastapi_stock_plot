@@ -9,8 +9,14 @@ from app.main import app
 
 client = TestClient(app)
 
+@patch('app.main.requests.get')
 @patch('yfinance.download')
-def test_plot(mock_download):
+def test_plot(mock_download, mock_requests_get):
+    # Mock requests.get for get_company_name
+    mock_requests_get.return_value.status_code = 200
+    mock_requests_get.return_value.json.return_value = {
+        'quotes': [{'symbol': 'AAPL', 'shortname': 'Apple Inc.'}]
+    }
     # 1. For plot_data
     plot_data_df = pd.DataFrame({
         'Open': [150, 151, 152], 'High': [155, 156, 157], 'Low': [149, 150, 151],
@@ -46,8 +52,14 @@ def test_plot(mock_download):
 
     assert response.status_code == 200
 
+@patch('app.main.requests.get')
 @patch('yfinance.download')
-def test_plot_long_range(mock_download):
+def test_plot_long_range(mock_download, mock_requests_get):
+    # Mock requests.get for get_company_name
+    mock_requests_get.return_value.status_code = 200
+    mock_requests_get.return_value.json.return_value = {
+        'quotes': [{'symbol': 'AAPL', 'shortname': 'Apple Inc.'}]
+    }
     # 1. For plot_data
     plot_data_df = pd.DataFrame({
         'Open': [150 + i for i in range(30)], 'High': [155 + i for i in range(30)], 'Low': [149 + i for i in range(30)],
@@ -83,8 +95,12 @@ def test_plot_long_range(mock_download):
 
     assert response.status_code == 200
 
+@patch('app.main.requests.get')
 @patch('yfinance.download')
-def test_plot_no_data(mock_download):
+def test_plot_no_data(mock_download, mock_requests_get):
+    # Mock requests.get (even if likely not called if cache hit logic wasn't there, but good to have)
+    mock_requests_get.return_value.status_code = 200
+    mock_requests_get.return_value.json.return_value = {'quotes': []}
     # Mock yfinance.download to return an empty DataFrame
     mock_download.return_value = pd.DataFrame()
 
@@ -99,8 +115,11 @@ def test_plot_no_data(mock_download):
     assert 'No data found for the given ticker and date range.' in response.text
     assert '<a href="/" class="btn btn-primary btn-block">Go Back</a>' in response.text
 
+@patch('app.main.requests.get')
 @patch('yfinance.download')
-def test_plot_ytd(mock_download):
+def test_plot_ytd(mock_download, mock_requests_get):
+    mock_requests_get.return_value.status_code = 200
+    mock_requests_get.return_value.json.return_value = {'quotes': [{'symbol': 'AAPL', 'shortname': 'Apple Inc.'}]}
     mock_download.return_value = pd.DataFrame({
         'Open': [150], 'High': [155], 'Low': [149],
         'Close': [152], 'Volume': [1000]
@@ -108,8 +127,11 @@ def test_plot_ytd(mock_download):
     response = client.get('/plot/AAPL/YTD')
     assert response.status_code == 200
 
+@patch('app.main.requests.get')
 @patch('yfinance.download')
-def test_plot_1y(mock_download):
+def test_plot_1y(mock_download, mock_requests_get):
+    mock_requests_get.return_value.status_code = 200
+    mock_requests_get.return_value.json.return_value = {'quotes': [{'symbol': 'AAPL', 'shortname': 'Apple Inc.'}]}
     mock_download.return_value = pd.DataFrame({
         'Open': [150], 'High': [155], 'Low': [149],
         'Close': [152], 'Volume': [1000]
@@ -117,8 +139,11 @@ def test_plot_1y(mock_download):
     response = client.get('/plot/AAPL/1y')
     assert response.status_code == 200
 
+@patch('app.main.requests.get')
 @patch('yfinance.download')
-def test_plot_5y(mock_download):
+def test_plot_5y(mock_download, mock_requests_get):
+    mock_requests_get.return_value.status_code = 200
+    mock_requests_get.return_value.json.return_value = {'quotes': [{'symbol': 'AAPL', 'shortname': 'Apple Inc.'}]}
     mock_download.return_value = pd.DataFrame({
         'Open': [150], 'High': [155], 'Low': [149],
         'Close': [152], 'Volume': [1000]
@@ -126,8 +151,11 @@ def test_plot_5y(mock_download):
     response = client.get('/plot/AAPL/5y')
     assert response.status_code == 200
 
+@patch('app.main.requests.get')
 @patch('yfinance.download')
-def test_plot_max(mock_download):
+def test_plot_max(mock_download, mock_requests_get):
+    mock_requests_get.return_value.status_code = 200
+    mock_requests_get.return_value.json.return_value = {'quotes': [{'symbol': 'AAPL', 'shortname': 'Apple Inc.'}]}
     mock_download.return_value = pd.DataFrame({
         'Open': [150], 'High': [155], 'Low': [149],
         'Close': [152], 'Volume': [1000]
